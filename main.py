@@ -13,7 +13,7 @@ import models
 from database import Base, engine, get_db
 from schemas import PostCreate, PostResponse, UserCreate, UserResponse
 
-Base.metadeta.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -113,7 +113,7 @@ def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return
+    return new_user
 
 @app.get("/api/users/{user_id}", response_model = UserResponse)
 def get_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
@@ -134,6 +134,11 @@ def get_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
 # POSTS
 #########################################################################
 
+@app.get("/api/posts", response_model=list[PostResponse])
+def get_posts(db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Post))
+    posts = result.scalars().all()
+    return posts
 
 @app.get("/api/users/{user_id}/posts", response_model=list[PostResponse])
 def get_user_posts(user_id: int, db: Annotated[Session, Depends(get_db)]):
